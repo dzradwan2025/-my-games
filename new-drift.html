@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <title>🚗 نيو دريفت - New Drift</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #2c3e50; font-family: Arial, sans-serif; position: fixed; }
+        #gameCanvas { display: block; background: #34495e; width: 100%; height: 100%; }
+        .score-bar { position: absolute; top: 15px; left: 15px; color: #fff; font-size: 1.2rem; font-weight: bold; z-index: 10; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .controls { position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: space-around; padding: 0 20px; z-index: 10; }
+        .btn { width: 80px; height: 80px; background: rgba(255,255,255,0.2); border: 3px solid #fff; border-radius: 50%; color: #fff; font-size: 2rem; display: flex; align-items: center; justify-content: center; touch-action: none; }
+        .btn:active { background: rgba(255,255,255,0.5); transform: scale(0.9); }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 100; }
+        .box { background: #2c3e50; padding: 30px; border-radius: 20px; border: 3px solid #e74c3c; text-align: center; color: #fff; width: 85%; max-width: 300px; }
+        .box h2 { font-size: 1.8rem; margin-bottom: 15px; }
+        .box p { font-size: 1.2rem; margin-bottom: 20px; color: #f1c40f; }
+        .btn-start { background: #e74c3c; color: #fff; border: none; padding: 12px 30px; font-size: 1.2rem; font-radius: 10px; font-weight: bold; cursor: pointer; border-radius: 10px; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div class="score-bar">🚗 النقاط: <span id="score">0</span></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="controls">
+        <div class="btn" id="btnLeft">◀️</div>
+        <div class="btn" id="btnRight">▶️</div>
+    </div>
+
+    <div class="overlay" id="loseOverlay">
+        <div class="box">
+            <h2>انتهت اللعبة! 💥</h2>
+            <p id="finalScore">النقاط: 0</p>
+            <button class="btn-start" onclick="resetGame()">🔄 العب مجدداً</button>
+        </div>
+    </div>
+
+    <script>
+        var canvas = document.getElementById('gameCanvas');
+        var ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+
+        var score = 0;
+        var gameActive = false;
+        var car = { x: 0, y: 0, w: 40, h: 70, speed: 6 };
+        var obstacles = [];
+        var keys = { left: false, right: false };
+
+        function initGame() {
+            car.x = canvas.width / 2 - car.w / 2;
+            car.y = canvas.height - car.h - 130;
+            obstacles = [];
+            score = 0;
+            document.getElementById('score').innerText = score;
+        }
+
+        function spawnObstacle() {
+            if(!gameActive) return;
+            var width = Math.random() * 40 + 40;
+            var x = Math.random() * (canvas.width - width);
+            obstacles.push({ x: x, y: -60, w: width, h: 40, speed: Math.random() * 2 + 4 });
+            setTimeout(spawnObstacle, Math.random() * 1000 + 1000);
+        }
+
+        function update() {
+            if(!gameActive) return;
+
+            if(keys.left && car.x > 0) car.x -= car.speed;
+            if(keys.right && car.x < canvas.width - car.w) car.x += car.speed;
+
+            for(var i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].y += obstacles[i].speed;
+
+                // كشف التصادم
+                if(car.x < obstacles[i].x + obstacles[i].w &&
+                   car.x + car.w > obstacles[i].x &&
+                   car.y < obstacles[i].y + obstacles[i].h &&
+                   car.y + car.h > obstacles[i].y) {
+                    gameOver();
+                }
+
+                // تجاوز العقبة بنجاح
+                if(obstacles[i].y > canvas.height) {
+                    obstacles.splice(i, 1);
+                    score++;
+                    document.getElementById('score').innerText = score;
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // رسم الخطوط الجانبية للطريق
+            ctx.fillStyle = '#f1c40f';
+            ctx.fillRect(10, 0, 5, canvas.height);
+            ctx.fillRect(canvas.width - 15, 0, 5, canvas.height);
+
+            // رسم سيارة اللاعب
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(car.x, car.y, car.w, car.h);
+
+            // رسم العقبات
+            ctx.fillStyle = '#2ecc71';
+            for(var i = 0; i < obstacles.length; i++) {
+                ctx.fillRect(obstacles[i].x, obstacles[i].y, obstacles[i].w, obstacles[i].h);
+            }
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        function gameOver() {
+            gameActive = false;
+            document.getElementById('finalScore').innerText = "النقاط المحققة: " + score;
+            document.getElementById('loseOverlay').style.display = 'flex';
+        }
+
+        function resetGame() {
+            document.getElementById('loseOverlay').style.display = 'none';
+            initGame();
+            gameActive = true;
+        }
+
+        // أزرار التحكم باللمس
+        var bLeft = document.getElementById('btnLeft');
+        var bRight = document.getElementById('btnRight');
+
+        bLeft.addEventListener('touchstart', function(e) { e.preventDefault(); keys.left = true; });
+        bLeft.addEventListener('touchend', function(e) { keys.left = false; });
+        bRight.addEventListener('touchstart', function(e) { e.preventDefault(); keys.right = true; });
+        bRight.addEventListener('touchend', function(e) { keys.right = false; });
+
+        // دعم الماوس للتجربة على المتصفح
+        bLeft.addEventListener('mousedown', function() { keys.left = true; });
+        bLeft.addEventListener('mouseup', function() { keys.left = false; });
+        bRight.addEventListener('mousedown', function() { keys.right = true; });
+        bRight.addEventListener('mouseup', function() { keys.right = false; });
+
+        initGame();
+        loop();
+        setTimeout(spawnObstacle, 1000);
+    </script>
+</body>
+</html>
