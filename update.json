@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <title>🎮 مركز ألعابي</title>
+    <style>
+        :root { --bg-main: #0f172a; --bg-card: #1e293b; --accent: #38bdf8; --text: #ffffff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; user-select: none; }
+        body { background-color: var(--bg-main); color: var(--text); overflow-x: hidden; padding-bottom: 30px; }
+        header { text-align: center; padding: 30px 15px; background: linear-gradient(180deg, #1e293b, var(--bg-main)); }
+        header h1 { font-size: 2rem; color: var(--accent); text-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
+        header p { font-size: 0.9rem; color: #94a3b8; margin-top: 5px; }
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .game-card { background: var(--bg-card); border-radius: 16px; padding: 15px; text-align: center; border: 1px solid #334155; transition: transform 0.2s; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .game-card:active { transform: scale(0.95); }
+        .game-icon { font-size: 3rem; margin-bottom: 10px; display: block; }
+        .game-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
+        .game-status { font-size: 0.75rem; color: #4ade80; background: rgba(74, 222, 128, 0.1); padding: 2px 8px; border-radius: 10px; display: inline-block; }
+        .update-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .update-overlay.show { display: flex; }
+        .update-box { background: #1e293b; border-radius: 24px; width: 85%; max-width: 320px; padding: 25px; text-align: center; border: 2px solid var(--accent); }
+        .update-box h2 { color: #fff; font-size: 1.4rem; margin-bottom: 10px; }
+        .update-box p { color: #94a3b8; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.4; }
+        .update-actions { display: flex; flex-direction: column; gap: 10px; }
+        .btn-update { background: linear-gradient(135deg, #38bdf8, #0284c7); color: white; border: none; padding: 12px; width: 100%; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .btn-skip { background: rgba(255, 255, 255, 0.08); color: #cbd5e1; border: none; padding: 10px; width: 100%; border-radius: 12px; font-size: 1rem; cursor: pointer; }
+        #gameViewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; flex-direction: column; }
+        #gameViewer.active { display: flex; }
+        .viewer-bar { width: 100%; height: 50px; background: #1e293b; display: flex; align-items: center; padding: 0 15px; }
+        .close-btn { background: #ef4444; color: white; border: none; padding: 6px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .viewer-title { flex: 1; text-align: center; font-weight: bold; font-size: 1.1rem; margin-right: -50px; }
+        #gameFrame { flex: 1; width: 100%; height: calc(100% - 50px); border: none; background: #fff; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎮 مركز ألعابي</h1>
+        <p>العب ألعابك المفضلة أونلاين وبدون إنترنت!</p>
+    </header>
+
+    <div class="games-grid" id="gamesGrid">
+        <div class="game-card" onclick="openGame('🍬 كاندي هيرو', 'candy-hero.html')">
+            <span class="game-icon">🍬</span>
+            <div class="game-title">كاندي هيرو</div>
+            <span class="game-status">⚡ جاهزة أوفلاين</span>
+        </div>
+    </div>
+
+    <div class="update-overlay" id="updateOverlay">
+        <div class="update-box">
+            <h2>🔥 ألعاب جديدة متوفرة!</h2>
+            <p>تم إضافة تحديثات جديدة وألعاب مميزة للمنصة. هل تريد تحميلها وتحديث القائمة الآن؟</p>
+            <div class="update-actions">
+                <button class="btn-update" onclick="applyUpdate()">🔄 تحديث وتحميل</button>
+                <button class="btn-skip" onclick="closeUpdateModal()">اللعب لاحقاً ↩️</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameViewer">
+        <div class="viewer-bar">
+            <button class="close-btn" onclick="closeGame()">✖ إغلاق</button>
+            <div class="viewer-title" id="viewerTitle">اسم اللعبة</div>
+        </div>
+        <iframe id="gameFrame" src=""></iframe>
+    </div>
+
+    <script>
+        // رقم الإصدار الحالي المحفوظ في جهاز اللاعب
+        var localVersion = parseInt(localStorage.getItem('game_hub_version')) || 1; 
+        var pendingUpdateData = null;
+
+        // عند تحميل الصفحة، نقوم بإعادة بناء الألعاب المضافة سابقاً من الذاكرة المحلية
+        window.onload = function() {
+            var savedGames = JSON.parse(localStorage.getItem('added_games')) || [];
+            savedGames.forEach(function(g) {
+                addNewGameCard(g.title, g.url, g.icon);
+            });
+            checkForUpdates();
+        };
+
+        function checkForUpdates() {
+            if (!navigator.onLine) return; // إذا كان أوفلاين لا نفعل شيئاً
+
+            // جلب ملف التحديث الذكي من نفس المستودع تلقائياً
+            fetch('update.json?nocache=' + Date.now())
+                .then(response => response.json())
+                .then(data => {
+                    if (data.version > localVersion) {
+                        pendingUpdateData = data;
+                        document.getElementById('updateOverlay').classList.add('show');
+                    }
+                })
+                .catch(err => console.log("خطأ في فحص التحديثات:", err));
+        }
+
+        function applyUpdate() {
+            if (pendingUpdateData) {
+                // حفظ رقم الإصدار الجديد في جهاز اللاعب
+                localStorage.setItem('game_hub_version', pendingUpdateData.version);
+                localVersion = pendingUpdateData.version;
+
+                // حفظ اللعبة الجديدة في الذاكرة لكي تظهر دائماً حتى بدون إنترنت
+                var savedGames = JSON.parse(localStorage.getItem('added_games')) || [];
+                
+                // التأكد من عدم تكرار إضافة نفس اللعبة
+                if (!savedGames.some(g => g.url === pendingUpdateData.new_game.url)) {
+                    savedGames.push(pendingUpdateData.new_game);
+                    localStorage.setItem('added_games', JSON.stringify(savedGames));
+                    addNewGameCard(pendingUpdateData.new_game.title, pendingUpdateData.new_game.url, pendingUpdateData.new_game.icon);
+                }
+            }
+            document.getElementById('updateOverlay').classList.remove('show');
+            alert("🚀 تم تحديث المنصة وإضافة اللعبة الجديدة بنجاح!");
+        }
+
+        function closeUpdateModal() {
+            document.getElementById('updateOverlay').classList.remove('show');
+        }
+
+        function addNewGameCard(title, url, icon) {
+            var grid = document.getElementById('gamesGrid');
+            var card = document.createElement('div');
+            card.className = 'game-card';
+            card.onclick = function() { openGame(title, url); };
+            card.innerHTML = '<span class="game-icon">' + icon + '</span><div class="game-title">' + title + '</div><span class="game-status">⚡ جاهزة أوفلاين</span>';
+            grid.appendChild(card);
+        }
+
+        function openGame(title, url) {
+            document.getElementById('viewerTitle').innerText = title;
+            document.getElementById('gameFrame').src = url;
+            document.getElementById('gameViewer').classList.add('active');
+        }
+
+        function closeGame() {
+            document.getElementById('gameViewer').classList.remove('active');
+            document.getElementById('gameFrame').src = "";
+        }
+    </script>
+</body>
+</html>
