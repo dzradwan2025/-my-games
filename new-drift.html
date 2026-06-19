@@ -1,200 +1,716 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#0f172a">
-    <title>🏎️ نيو دريفت - Neon Drift</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=none">
+    <title>Neon Drift - Ultimate Edition</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-        html, body { width: 100%; height: 100%; overflow: hidden; background-color: #0f172a; font-family: Arial, sans-serif; }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background-color: #0d0e15;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            direction: rtl;
+            overscroll-behavior-y: contain; 
+            overscroll-behavior: none;
+        }
         
-        #gameContainer { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; }
+        /* شريط علوي مضاف لربط اللعبة بالمنصة الرئيسية */
+        .hub-nav-bar {
+            width: 100%;
+            background: #161824;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #282b3d;
+            z-index: 9999;
+            position: relative;
+        }
+        .hub-close-btn {
+            background: #ea4335;
+            color: #fff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        #game-screen {
+            display: none;
+            position: relative;
+            width: 100vw;
+            height: calc(100vh - 45px);
+            background: #12131c;
+        }
+        #track {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 100%;
+            margin: 0 auto;
+            background: #161824;
+            border-left: 3px solid #1f2234;
+            border-right: 3px solid #1f2234;
+            overflow: hidden;
+        }
+        .neon-border {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #00f0ff, #ff007f);
+            box-shadow: 0 0 15px rgba(0,240,255,0.7);
+        }
+        .left-border { left: 0; }
+        .right-border { right: 0; }
         
-        /* شريط النقاط العلوي المصلح */
-        .score-bar { width: 100%; padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #fff; font-size: 1.2rem; font-weight: bold; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
-        .high-score { color: #f59e0b; }
-        .close-btn { background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
-
-        /* منطقة اللعب */
-        #canvasContainer { flex: 1; width: 100%; position: relative; background: #1e293b; display: flex; justify-content: center; }
-        canvas { background: #334155; display: block; width: 100%; height: 100%; max-width: 500px; }
-
-        /* أزرار التحكم باللمس */
-        .controls-container { width: 100%; max-width: 500px; margin: 0 auto; padding: 20px 30px; display: flex; justify-content: space-between; background: #0f172a; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 20; pointer-events: none; }
-        .ctrl-btn { width: 85px; height: 85px; background: rgba(255, 255, 255, 0.12); border: 3px solid #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: #fff; pointer-events: auto; touch-action: none; box-shadow: 0 6px 15px rgba(0,0,0,0.5); }
-        .ctrl-btn:active { background: rgba(56, 189, 248, 0.3); border-color: #38bdf8; transform: scale(0.92); }
-
-        /* الشاشات المنبثقة */
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; padding: 20px; text-align: center; }
-        .popup-box { background: #1e293b; border: 2px solid #38bdf8; padding: 30px 25px; border-radius: 24px; width: 90%; max-width: 340px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .popup-box h1 { color: #38bdf8; font-size: 2rem; margin-bottom: 15px; text-shadow: 0 0 10px rgba(56,189,248,0.3); }
-        .popup-box p { color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px; }
-        .btn-main { background: linear-gradient(135deg, #38bdf8, #0284c7); color: white; border: none; padding: 14px 30px; font-size: 1.2rem; font-weight: bold; border-radius: 12px; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(2,132,199,0.4); }
-        .btn-main:active { transform: scale(0.97); }
+        .road-strip {
+            position: absolute;
+            width: 6px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.15);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        #player {
+            position: absolute;
+            width: 50px;
+            height: 85px;
+            bottom: 120px;
+            left: calc(50% - 25px);
+            z-index: 10;
+            transition: transform 0.05s ease, filter 0.2s;
+            will-change: left, transform;
+        }
+        #player .car-body {
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            filter: drop-shadow(0 0 12px #00f0ff);
+        }
+        
+        .obstacle, .coin {
+            position: absolute;
+            width: 48px;
+            height: 80px;
+            z-index: 5;
+            will-change: top;
+        }
+        .coin {
+            width: 32px;
+            height: 32px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        .hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .hud-item {
+            background: rgba(18, 19, 28, 0.85);
+            border: 1px solid #282b3d;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 25px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 35px;
+            z-index: 150;
+        }
+        .btn {
+            width: 75px;
+            height: 75px;
+            background: rgba(22, 24, 36, 0.9);
+            border: 2px solid #282b3d;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #00f0ff;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+            touch-action: none;
+        }
+        .btn:active {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: #00f0ff;
+            box-shadow: 0 0 15px rgba(0,240,255,0.5);
+        }
+        
+        .menu-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #0d0e15;
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .panel {
+            background: #12131c;
+            border: 2px solid #1f2234;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 360px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            position: relative;
+        }
+        h1 {
+            font-size: 2.2rem;
+            margin: 0 0 5px 0;
+            background: linear-gradient(45deg, #00f0ff, #ff007f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0,240,255,0.2);
+        }
+        .subtitle {
+            color: #626885;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+        
+        .action-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #00f0ff, #00a8ff);
+            border: none;
+            border-radius: 14px;
+            color: #0d0e15;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,240,255,0.4);
+            margin-bottom: 15px;
+        }
+        .action-btn:active { transform: scale(0.98); }
+        
+        .row-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .sec-btn {
+            background: #161824;
+            border: 1px solid #24273a;
+            color: #a2a8c2;
+            padding: 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .sec-btn.active {
+            border-color: #ff007f;
+            color: #ff007f;
+            background: rgba(255,0,127,0.05);
+        }
+        
+        .car-selector {
+            display: flex;
+            justify-content: space-around;
+            background: #0d0e15;
+            padding: 10px;
+            border-radius: 14px;
+            margin-bottom: 15px;
+            border: 1px solid #1c1e2e;
+        }
+        .car-opt {
+            width: 50px;
+            height: 50px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.4;
+            transition: 0.2s;
+        }
+        .car-opt.selected {
+            opacity: 1;
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 8px #00f0ff);
+        }
+        
+        #settings-trigger {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.4rem;
+            color: #626885;
+            cursor: pointer;
+        }
+        
+        .settings-popup {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(9, 10, 15, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .setting-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            color: #a2a8c2;
+        }
+        .setting-line select {
+            background: #161824;
+            border: 1px solid #24273a;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            outline: none;
+        }
     </style>
 </head>
 <body>
 
-    <div id="gameContainer">
-        <div class="score-bar">
-            <button class="close-btn" onclick="closeGame()">✖️ إغلاق</button>
-            <div>🚗 النقاط: <span id="scoreDisplay">0</span></div>
-            <div class="high-score">🏆 الأعلى: <span id="highDisplay">0</span></div>
-        </div>
+    <div class="hub-nav-bar">
+        <button class="hub-close-btn" onclick="returnToHub()">❌ مغادرة اللعبة</button>
+        <span style="color: #626885; font-size: 0.85rem; font-weight: bold;">Neon Drift Hub Integration</span>
+    </div>
 
-        <div id="canvasContainer">
-            <canvas id="gameCanvas"></canvas>
-
-            <div class="controls-container">
-                <div class="ctrl-btn" id="btnLeft">◀️</div>
-                <div class="ctrl-btn" id="btnRight">▶️</div>
+    <div id="game-screen">
+        <div id="track">
+            <div class="neon-border left-border"></div>
+            <div class="neon-border right-border"></div>
+            
+            <div class="hud">
+                <div class="hud-item" id="score-box">🏁 0</div>
+                <div class="hud-item" id="coin-box" style="color: #ffd700;">🪙 0</div>
+            </div>
+            
+            <div id="player">
+                <div class="car-body"></div>
+            </div>
+            
+            <div class="controls" id="touch-controls">
+                <div class="btn" id="left-btn">◀</div>
+                <div class="btn" id="right-btn">▶</div>
             </div>
         </div>
     </div>
 
-    <div class="overlay" id="startOverlay">
-        <div class="popup-box">
-            <h1>🏎️ نيو دريفت</h1>
-            <p>تفادى السيارات الأخرى وسجل أعلى رقم قياسي!</p>
-            <button class="btn-main" onclick="startGame()">ابدأ السباق 🏁</button>
+    <div class="menu-overlay" id="main-menu">
+        <div class="panel">
+            <div id="settings-trigger" onclick="toggleSettingsMenu(true)">⚙️</div>
+            <h1 id="menu-title">NEON DRIFT</h1>
+            <div class="subtitle" id="menu-sub">Ultimate Cyberpunk Racer</div>
+            
+            <div class="car-selector">
+                <div class="car-opt selected" onclick="chooseVehicle(0)" id="c0"></div>
+                <div class="car-opt" onclick="chooseVehicle(1)" id="c1"></div>
+                <div class="car-opt" onclick="chooseVehicle(2)" id="c2"></div>
+            </div>
+            
+            <div class="row-grid">
+                <button class="sec-btn active" id="t0" onclick="chooseTrackStyle(0)">مضمار نيون</button>
+                <button class="sec-btn" id="t1" onclick="chooseTrackStyle(1)">سايبر جحيم</button>
+            </div>
+            
+            <button class="action-btn" id="play-btn" onclick="launchGameEngine()">ابدأ السباق 🏁</button>
         </div>
     </div>
 
-    <div class="overlay" id="gameOverOverlay" style="display: none;">
-        <div class="popup-box">
-            <h1 style="color: #ef4444;">💥 تحطمت السيارة!</h1>
-            <p id="finalScoreText">النقاط التي أحرزتها: 0</p>
-            <button class="btn-main" style="background: linear-gradient(135deg, #ef4444, #b91c1c);" onclick="resetGame()">إعادة المحاولة 🔄</button>
+    <div class="menu-overlay" id="crash-screen" style="display: none; background: rgba(13,14,21,0.95);">
+        <div class="panel" style="border-color: #ff007f;">
+            <h1 style="background: linear-gradient(45deg, #ff007f, #ea4335); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" id="crash-title">💥 تحطم كامل!</h1>
+            <div style="margin: 20px 0; font-size: 1.2rem;">
+                <div id="final-score" style="margin-bottom: 8px;">المسافة: 0</div>
+                <div id="final-coins" style="color: #ffd700;">العملات: 0</div>
+            </div>
+            <button class="action-btn" style="background: linear-gradient(90deg, #ff007f, #ea4335); color: #fff; box-shadow: 0 5px 15px rgba(255,0,127,0.4);" id="retry-btn" onclick="launchGameEngine()">إعادة المحاولة 🔄</button>
+            <button class="sec-btn" style="width: 100%; padding: 12px;" id="menu-btn" onclick="backToMainMenu()">القائمة الرئيسية 🏠</button>
+        </div>
+    </div>
+
+    <div class="settings-popup" id="settings-menu">
+        <div class="panel">
+            <h2 style="color: #00f0ff; margin-top:0; font-size:1.5rem;" id="set-title">⚙️ الإعدادات</h2>
+            <div style="margin: 20px 0; text-align: right;">
+                <div class="setting-line">
+                    <span id="set-control">نظام التحكم:</span>
+                    <select id="control-select" onchange="adjustControlType()">
+                        <option value="buttons">الأزرار (Buttons)</option>
+                        <option value="swipe">السحب (Swipe)</option>
+                        <option value="gyroscope">الجروسكوب (Gyro)</option>
+                        <option value="tracking">تتبع الإصبع (Tracking)</option>
+                    </select>
+                </div>
+                <div class="setting-line">
+                    <span id="set-lang">اللغة (Language):</span>
+                    <select id="lang-select" onchange="switchLanguage()">
+                        <option value="ar">العربية</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                <div class="setting-line">
+                    <span id="set-music">الموسيقى الخلفية:</span>
+                    <select id="music-select"><option value="on">تشغيل</option><option value="off">إيقاف</option></select>
+                </div>
+            </div>
+            <button class="action-btn" style="margin:0;" id="set-done" onclick="toggleSettingsMenu(false)">تم ✔️</button>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        // تعريف الأصول والصور المدمجة برمز SVG مشفر لتفادي فقدان الملفات والعمل بدون نت
+        const carAssets = [
+            `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 100"><rect x="10" y="20" width="40" height="60" rx="10" fill="%2300f0ff"/><rect x="15" y="35" width="30" height="20" rx="4" fill="%23111"/><rect x="18" y="70" width="24" height="6" fill="%23ff007f"/><circle cx="10" cy="25" r="5" fill="%23fff"/><circle cx="50" cy="25" r="5" fill="%23fff"/></svg>`,
+            `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 100"><rect x="10" y="15" width="40" height="70" rx="12" fill="%23ff007f"/><rect x="15" y="35" width="30" height="22" rx="4" fill="%23111"/><path d="M10 20 L30 5 L50 20 Z" fill="%23ff007f"/><circle cx="15" cy="90" r="6" fill="%2300f0ff"/><circle cx="45" cy="90" r="6" fill="%2300f0ff"/></svg>`,
+            `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 100"><rect x="8" y="15" width="44" height="70" rx="15" fill="%23eab308"/><rect x="14" y="32" width="32" height="25" rx="5" fill="%23111"/><rect x="12" y="5" width="6" height="15" fill="%23fff"/><rect x="42" y="5" width="6" height="15" fill="%23fff"/></svg>`
+        ];
+        
+        const coinAsset = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="%23ffd700" stroke="%23fff" stroke-width="2"/><text x="50%" y="60%" font-weight="bold" font-size="16" text-anchor="middle" fill="%23fff" font-family="sans-serif">💲</text></svg>`;
 
-        let score = 0;
-        let highScore = localStorage.getItem('neon_drift_high') || 0;
+        const translations = {
+            ar: { title: "NEON DRIFT", sub: "سباق السيبربانك اللانهائي", play: "ابدأ السباق 🏁", track0: "مضمار نيون", track1: "سايبر جحيم", crash: "💥 تحطم كامل!", score: "المسافة: ", coins: "العملات: ", retry: "إعادة المحاولة 🔄", menu: "القائمة الرئيسية 🏠", set_title: "⚙️ الإعدادات", control: "نظام التحكم:", lang: "اللغة:", music: "الموسيقى:", done: "تم ✔️" },
+            en: { title: "NEON DRIFT", sub: "Infinite Cyberpunk Racer", play: "Start Race 🏁", track0: "Neon Track", track1: "Cyber Hell", crash: "💥 Total Crash!", score: "Distance: ", coins: "Coins: ", retry: "Retry 🔄", menu: "Main Menu 🏠", set_title: "⚙️ Settings", control: "Control:", lang: "Language:", music: "Music:", done: "Done ✔️" }
+        };
+
+        let currentLang = 'ar';
+        let selectedCar = 0;
+        let selectedTrack = 0;
+        let controlType = 'buttons';
         let gameActive = false;
-        let player, obstacles, animationFrameId, obstacleTimer;
-        let speed = 5;
+        let isPaused = false;
+        let score = 0;
+        let coins = 0;
+        let gameSpeed = 5;
+        let playerX = 0;
+        
+        let roadLinesList = [];
+        let activeElementsList = [];
+        let gameLoopInterval, elementSpawnTimeout, lineSpawnInterval;
+        
+        // محرك الصوت المدمج الذكي (المولد للأصوات والموسيقى بدون ملفات خارجية)
+        let audioCtx;
+        let bgMusicNode = null;
 
-        function resizeCanvas() {
-            canvas.width = canvas.parentElement.clientWidth > 500 ? 500 : canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        document.getElementById('highDisplay').innerText = highScore;
-
-        const keys = { left: false, right: false };
-        const bLeft = document.getElementById('btnLeft');
-        const bRight = document.getElementById('btnRight');
-
-        bLeft.addEventListener('touchstart', (e) => { e.preventDefault(); keys.left = true; });
-        bLeft.addEventListener('touchend', () => keys.left = false);
-
-        bRight.addEventListener('touchstart', (e) => { e.preventDefault(); keys.right = true; });
-        bRight.addEventListener('touchend', () => keys.right = false);
-
-        // تفعيل زر الخروج للعودة للمنصة الرئيسية ليعمل 100%
-        function closeGame() {
-            gameActive = false;
-            cancelAnimationFrame(animationFrameId);
-            clearInterval(obstacleTimer);
-            window.location.href = 'index.html'; // يخرج ويعود للرئيسية
+        function initAudioEngine() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
 
-        function startGame() {
-            document.getElementById('startOverlay').style.display = 'none';
-            document.getElementById('gameOverOverlay').style.display = 'none';
-            gameActive = true;
-            score = 0;
-            speed = 5;
-            document.getElementById('scoreDisplay').innerText = score;
-            
-            player = {
-                x: canvas.width / 2 - 20,
-                y: canvas.height - 180,
-                width: 40,
-                height: 70,
-                color: '#38bdf8'
-            };
+        function triggerAudioEffect(type) {
+            if (!audioCtx) return;
+            try {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
 
-            obstacles = [];
-            if (obstacleTimer) clearInterval(obstacleTimer);
-            obstacleTimer = setInterval(spawnObstacle, 1200);
-
-            updateGame();
-        }
-
-        function spawnObstacle() {
-            if (!gameActive) return;
-            const width = 40;
-            const height = 70;
-            const x = Math.random() * (canvas.width - width - 40) + 20;
-            const colors = ['#ef4444', '#eab308', '#a855f7', '#10b981'];
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            obstacles.push({ x, y: -height, width, height, color });
-        }
-
-        function updateGame() {
-            if (!gameActive) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = '#64748b';
-            ctx.fillRect(10, 0, 6, canvas.height);
-            ctx.fillRect(canvas.width - 16, 0, 6, canvas.height);
-
-            if (keys.left && player.x > 20) player.x -= 6;
-            if (keys.right && player.x < canvas.width - player.width - 20) player.x += 6;
-
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(player.x + 5, player.y + 15, player.width - 10, 15);
-
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                let obs = obstacles[i];
-                obs.y += speed;
-
-                ctx.fillStyle = obs.color;
-                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(obs.x + 5, obs.y + 40, obs.width - 10, 15);
-
-                if (player.x < obs.x + obs.width &&
-                    player.x + player.width > obs.x &&
-                    player.y < obs.y + obs.height &&
-                    player.y + player.height > obs.y) {
-                    gameOver();
+                if (type === 'coin') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+                } else if (type === 'crash') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
                 }
+            } catch(e){}
+        }
 
-                if (obs.y > canvas.height) {
-                    obstacles.splice(i, 1);
+        function manageBgMusic(status) {
+            if (!audioCtx || document.getElementById('music-select').value === 'off') return;
+            try {
+                if (status === 'start') {
+                    if (bgMusicNode) return;
+                    bgMusicNode = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    bgMusicNode.type = 'triangle';
+                    bgMusicNode.frequency.setValueAtTime(120, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    bgMusicNode.connect(gain); gain.connect(audioCtx.destination);
+                    bgMusicNode.start();
+                } else if (status === 'stop' && bgMusicNode) {
+                    bgMusicNode.stop(); bgMusicNode = null;
+                }
+            } catch(e){}
+        }
+
+        // تفريعات القوائم والتغيير والتحكم
+        document.getElementById('c0').style.backgroundImage = `url('${carAssets[0]}')`;
+        document.getElementById('c1').style.backgroundImage = `url('${carAssets[1]}')`;
+        document.getElementById('c2').style.backgroundImage = `url('${carAssets[2]}')`;
+        document.querySelector('#player .car-body').style.backgroundImage = `url('${carAssets[0]}')`;
+
+        // دالة مغادرة اللعبة والرجوع للملف الرئيسي index.html المخصص لـ GitHub
+        function returnToHub() {
+            gameActive = false;
+            clearInterval(gameLoopInterval);
+            clearTimeout(elementSpawnTimeout);
+            manageBgMusic('stop');
+            window.location.href = 'index.html';
+        }
+
+        function switchLanguage() {
+            currentLang = document.getElementById('lang-select').value;
+            const t = translations[currentLang];
+            document.body.style.direction = currentLang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('menu-title').innerText = t.title;
+            document.getElementById('menu-sub').innerText = t.sub;
+            document.getElementById('play-btn').innerText = t.play;
+            document.getElementById('t0').innerText = t.track0;
+            document.getElementById('t1').innerText = t.track1;
+            document.getElementById('crash-title').innerText = t.crash;
+            document.getElementById('retry-btn').innerText = t.retry;
+            document.getElementById('menu-btn').innerText = t.menu;
+            document.getElementById('set-title').innerText = t.set_title;
+            document.getElementById('set-control').innerText = t.control;
+            document.getElementById('set-lang').innerText = t.lang;
+            document.getElementById('set-music').innerText = t.music;
+            document.getElementById('set-done').innerText = t.done;
+        }
+
+        function chooseVehicle(index) {
+            selectedCar = index;
+            document.querySelectorAll('.car-opt').forEach((el, i) => {
+                el.classList.toggle('selected', i === index);
+            });
+            document.querySelector('#player .car-body').style.backgroundImage = `url('${carAssets[index]}')`;
+        }
+
+        function chooseTrackStyle(index) {
+            selectedTrack = index;
+            document.getElementById('t0').classList.toggle('active', index === 0);
+            document.getElementById('t1').classList.toggle('active', index === 1);
+            const track = document.getElementById('track');
+            if (index === 1) {
+                track.style.background = '#1a0b11';
+                document.querySelectorAll('.neon-border').forEach(b => b.style.background = 'linear-gradient(180deg, #ff0055, #ffcc00)');
+            } else {
+                track.style.background = '#161824';
+                document.querySelectorAll('.neon-border').forEach(b => b.style.background = 'linear-gradient(180deg, #00f0ff, #ff007f)');
+            }
+        }
+
+        function toggleSettingsMenu(show) {
+            document.getElementById('settings-menu').style.display = show ? 'flex' : 'none';
+        }
+
+        function adjustControlType() {
+            controlType = document.getElementById('control-select').value;
+            document.getElementById('touch-controls').style.display = controlType === 'buttons' ? 'flex' : 'none';
+        }
+
+        // إطلاق المحرك والسباق الفعلي
+        function launchGameEngine() {
+            initAudioEngine();
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('crash-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            
+            gameActive = true; score = 0; coins = 0; gameSpeed = 5;
+            document.getElementById('score-box').innerText = "🏁 0";
+            document.getElementById('coin-box').innerText = "🪙 0";
+            
+            const track = document.getElementById('track');
+            activeElementsList.forEach(el => el.remove());
+            roadLinesList.forEach(l => l.remove());
+            activeElementsList = [];
+            roadLinesList = [];
+            
+            playerX = (track.clientWidth / 2) - 25;
+            document.getElementById('player').style.left = playerX + 'px';
+            
+            // تهيئة الخطوط الحركية للطريق
+            for (let i = 0; i < 6; i++) {
+                let strip = document.createElement('div');
+                strip.className = 'road-strip';
+                strip.style.top = (i * 120) + 'px';
+                track.appendChild(strip);
+                roadLinesList.push(strip);
+            }
+            
+            adjustControlType();
+            manageBgMusic('start');
+            
+            gameLoopInterval = setInterval(coreGameTick, 1000 / 60);
+            scheduleElementSpawn();
+        }
+
+        function scheduleElementSpawn() {
+            if (!gameActive) return;
+            elementSpawnTimeout = setTimeout(() => {
+                spawnTrackElement();
+                scheduleElementSpawn();
+            }, Math.max(600, 1500 - (score * 15)));
+        }
+
+        function spawnTrackElement() {
+            const track = document.getElementById('track');
+            let isCoin = Math.random() < 0.35;
+            let el = document.createElement('div');
+            
+            el.className = isCoin ? 'coin' : 'obstacle';
+            if (isCoin) {
+                el.style.backgroundImage = `url('${coinAsset}')`;
+                el.dataset.type = 'coin';
+            } else {
+                let randomCar = Math.floor(Math.random() * carAssets.length);
+                el.style.backgroundImage = `url('${carAssets[randomCar]}')`;
+                el.style.transform = 'rotate(180deg)';
+                el.style.filter = 'drop-shadow(0 0 8px #ff0055)';
+                el.dataset.type = 'enemy';
+            }
+            
+            let maxL = track.clientWidth - 60;
+            el.style.left = Math.max(15, Math.random() * maxL) + 'px';
+            el.style.top = '-90px';
+            track.appendChild(el);
+            activeElementsList.push(el);
+        }
+
+        // أنظمة اللمس والتحرك المتكاملة (بدون عكس الاتجاهات)
+        let leftHolding = false, rightHolding = false;
+        document.getElementById('left-btn').addEventListener('touchstart', (e) => { e.preventDefault(); leftHolding = true; });
+        document.getElementById('left-btn').addEventListener('touchend', () => leftHolding = false);
+        document.getElementById('right-btn').addEventListener('touchstart', (e) => { e.preventDefault(); rightHolding = true; });
+        document.getElementById('right-btn').addEventListener('touchend', () => rightHolding = false);
+
+        // التحكم بالسحب وتتبع الإصبع (Swipe / Tracking)
+        let trackElement = document.getElementById('track');
+        trackElement.addEventListener('touchmove', (e) => {
+            if (!gameActive) return;
+            let touchX = e.touches[0].clientX - trackElement.getBoundingClientRect().left;
+            if (controlType === 'tracking') {
+                playerX = touchX - 25;
+            } else if (controlType === 'swipe') {
+                if (touchX < trackElement.clientWidth / 2) playerX -= 4;
+                else playerX += 4;
+            }
+        }, { passive: true });
+
+        // التحكم عبر مستشعر الحركة (Gyroscope)
+        window.addEventListener('deviceorientation', (e) => {
+            if (!gameActive || controlType !== 'gyroscope') return;
+            let tilt = e.gamma; // الميلان الجانبي
+            if (Math.abs(tilt) > 3) playerX += tilt * 0.25;
+        });
+
+        function coreGameTick() {
+            if (!gameActive) return;
+            const track = document.getElementById('track');
+            const player = document.getElementById('player');
+            const scoreBox = document.getElementById('score-box');
+            const coinBox = document.getElementById('coin-box');
+            
+            // معالجة الأزرار العادية
+            if (controlType === 'buttons') {
+                if (leftHolding) playerX -= 5;
+                if (rightHolding) playerX += 5;
+            }
+            
+            // كبح حدود السيارة داخل الشاشة
+            if (playerX < 12) playerX = 12;
+            if (playerX > track.clientWidth - 62) playerX = track.clientWidth - 62;
+            player.style.left = playerX + 'px';
+            
+            // تحريك الخطوط الأرضية
+            roadLinesList.forEach(line => {
+                let currentTop = parseFloat(line.style.top) + gameSpeed;
+                if (currentTop > track.clientHeight) {
+                    currentTop = -40;
                     score++;
-                    document.getElementById('scoreDisplay').innerText = score;
-                    if (score > highScore) {
-                        highScore = score;
-                        localStorage.setItem('neon_drift_high', highScore);
-                        document.getElementById('highDisplay').innerText = highScore;
+                    scoreBox.innerText = "🏁 " + score;
+                    if (score % 15 === 0) gameSpeed += 0.5;
+                }
+                line.style.top = currentTop + 'px';
+            });
+            
+            // تحريك العناصر وفحص الاصطدامات الشامل
+            let playerRect = player.getBoundingClientRect();
+            for (let i = activeElementsList.length - 1; i >= 0; i--) {
+                let el = activeElementsList[i];
+                let currentTop = parseFloat(el.style.top) + gameSpeed;
+                el.style.top = currentTop + 'px';
+                
+                if (currentTop > track.clientHeight) {
+                    el.remove(); activeElementsList.splice(i, 1);
+                    continue;
+                }
+                
+                let elRect = el.getBoundingClientRect();
+                if (
+                    playerRect.left < elRect.right && playerRect.right > elRect.left &&
+                    playerRect.top < elRect.bottom && playerRect.bottom > elRect.top
+                ) {
+                    if (el.dataset.type === 'coin') {
+                        coins++;
+                        coinBox.innerText = "🪙 " + coins;
+                        triggerAudioEffect('coin');
+                        el.remove(); activeElementsList.splice(i, 1);
+                    } else {
+                        endGame();
                     }
-                    if (score % 5 === 0) speed += 0.5;
                 }
             }
-            animationFrameId = requestAnimationFrame(updateGame);
         }
 
-        function gameOver() {
-            gameActive = false;
-            cancelAnimationFrame(animationFrameId);
-            clearInterval(obstacleTimer);
-            document.getElementById('finalScoreText').innerText = "النقاط التي أحرزتها: " + score;
-            document.getElementById('gameOverOverlay').style.display = 'flex';
+        function endGame() {
+            gameActive = false; isPaused = false;
+            clearInterval(gameLoopInterval);
+            clearTimeout(elementSpawnTimeout);
+            triggerAudioEffect('crash');
+            manageBgMusic('stop');
+            
+            const t = translations[currentLang];
+            document.getElementById('final-score').innerText = t.score + score;
+            document.getElementById('final-coins').innerText = t.coins + coins;
+            document.getElementById('crash-screen').style.display = 'flex';
         }
 
-        function resetGame() { startGame(); }
+        function backToMainMenu() {
+            document.getElementById('crash-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+        }
+
+        window.addEventListener('touchmove', function(e) {
+            if (e.touches[0].pageY > 0 && document.documentElement.scrollTop === 0) {
+                if (e.cancelable) e.preventDefault();
+            }
+        }, { passive: false });
     </script>
 </body>
 </html>
