@@ -2,154 +2,280 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
-    <title>🚗 نيو دريفت - New Drift</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>🍬 كاندي هيرو -Candy Hero (نسخة مصلحة ومستقرة)</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background: #2c3e50; font-family: Arial, sans-serif; position: fixed; }
-        #gameCanvas { display: block; background: #34495e; width: 100%; height: 100%; }
-        .score-bar { position: absolute; top: 15px; left: 15px; color: #fff; font-size: 1.2rem; font-weight: bold; z-index: 10; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-        .controls { position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: space-around; padding: 0 20px; z-index: 10; }
-        .btn { width: 80px; height: 80px; background: rgba(255,255,255,0.2); border: 3px solid #fff; border-radius: 50%; color: #fff; font-size: 2rem; display: flex; align-items: center; justify-content: center; touch-action: none; }
-        .btn:active { background: rgba(255,255,255,0.5); transform: scale(0.9); }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 100; }
-        .box { background: #2c3e50; padding: 30px; border-radius: 20px; border: 3px solid #e74c3c; text-align: center; color: #fff; width: 85%; max-width: 300px; }
-        .box h2 { font-size: 1.8rem; margin-bottom: 15px; }
-        .box p { font-size: 1.2rem; margin-bottom: 20px; color: #f1c40f; }
-        .btn-start { background: #e74c3c; color: #fff; border: none; padding: 12px 30px; font-size: 1.2rem; font-radius: 10px; font-weight: bold; cursor: pointer; border-radius: 10px; width: 100%; }
+        :root { --gold:#FFD700; --accent:#e94560; }
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+        html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#1a1a2e;font-family:'Arial',sans-serif;position:fixed;top:0;left:0;}
+
+        #mainMenu{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,#1a1a2e,#16213e,#0f3460);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:500;gap:15px;padding:15px;}
+        .menu-title{font-size:2.5rem;font-weight:bold;color:var(--gold);text-shadow:0 0 25px rgba(255,215,0,0.6);animation:logoFloat 2s ease-in-out infinite;}
+        @keyframes logoFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+        .menu-hero{font-size:4.5rem;animation:heroBounce 1.5s ease-in-out infinite;}
+        @keyframes heroBounce{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-12px) scale(1.04);}}
+        .menu-buttons{display:flex;flex-direction:column;gap:10px;width:85%;max-width:280px;}
+        .menu-btn{background:linear-gradient(135deg,#e94560,#ff6b6b);color:#fff;border:none;padding:14px;border-radius:12px;font-size:1.2rem;font-weight:bold;cursor:pointer;text-align:center;box-shadow:0 4px 15px rgba(233,68,96,0.4);}
+        .menu-btn:active{transform:scale(0.96);opacity:0.9;}
+        .high-score-menu{color:#fff;font-size:1.1rem;font-weight:bold;background:rgba(255,255,255,0.1);padding:6px 15px;border-radius:20px;}
+
+        #gameScreen{display:none;width:100%;height:100%;flex-direction:column;position:fixed;top:0;left:0;}
+        #gameScreen.active{display:flex;}
+        .top-bar{width:100%;padding:10px 15px;display:flex;justify-content:space-between;align-items:center;background:rgba(22,33,62,0.95);z-index:10;box-shadow:0 2px 12px rgba(0,0,0,0.5);color:#fff;font-size:1.1rem;font-weight:bold;}
+        .back-btn{background:rgba(255,255,255,0.1);color:#fff;border:none;font-size:1.1rem;cursor:pointer;padding:5px 12px;border-radius:8px;}
+        
+        .game-area{flex:1;width:100%;position:relative;overflow:hidden;background:linear-gradient(180deg,#87CEEB,#B0E0E6,#E0F7FA,#c8e6c9);touch-action:none;}
+        .cloud{position:absolute;font-size:2rem;opacity:0.4;animation:cloudMove linear infinite;pointer-events:none;}
+        .cloud:nth-child(1){top:8%;animation-duration:22s;}
+        .cloud:nth-child(2){top:20%;animation-duration:28s;animation-delay:-8s;}
+        @keyframes cloudMove{0%{left:-10%;}100%{left:110%;}}
+        
+        .danger-line{position:absolute;bottom:80px;width:100%;height:3px;background:linear-gradient(90deg,transparent,#ff0000,transparent);z-index:6;pointer-events:none;}
+        .ground{position:absolute;bottom:0;width:100%;height:60px;background:linear-gradient(0deg,#4CAF50,#66BB6A);border-radius:50% 50% 0 0/20px 20px 0 0;z-index:5;pointer-events:none;}
+        .character{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);font-size:3rem;z-index:20;pointer-events:none;}
+        
+        /* تكبير صندوق اللمس لحل مشكلة عدم القدرة على الضغط */
+        .falling-item {
+            position:absolute;
+            font-size:2.5rem;
+            z-index:15;
+            padding:15px; /* مساحة إضافية شفافة لتسهيل اللمس بالإصبع */
+            margin-top:-15px;
+            margin-left:-15px;
+            cursor:pointer;
+            touch-action:none;
+            will-change: transform;
+            filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .overlay {position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:none;justify-content:center;align-items:center;z-index:1000;}
+        .overlay.show {display:flex;}
+        .lose-box {background:#252a40;border-radius:24px;width:85%;max-width:320px;padding:30px 20px;box-shadow:0 12px 24px rgba(0,0,0,0.5);text-align:center;border:2px solid #4a5568;}
+        .emoji-status {font-size:4rem;display:block;margin-bottom:10px;}
+        .lose-title {color:#fff;font-size:1.6rem;font-weight:bold;margin-bottom:10px;}
+        .score-text {color:#ffcc00;font-size:1.2rem;font-weight:bold;margin:8px 0;}
+        .btn-retry {background:linear-gradient(180deg,#ff6565,#f34b5b);color:#fff;border:none;border-radius:14px;font-size:1.2rem;font-weight:bold;padding:12px;width:100%;margin-top:15px;cursor:pointer;box-shadow:0 4px 0 #ad2e3b;}
+        .btn-retry:active {transform:translateY(2px);box-shadow:0 2px 0 #ad2e3b;}
     </style>
 </head>
 <body>
 
-    <div class="score-bar">🚗 النقاط: <span id="score">0</span></div>
-    <canvas id="gameCanvas"></canvas>
+    <div id="mainMenu">
+        <div class="menu-hero">🦸‍♂️</div>
+        <div class="menu-title">🍬 كاندي هيرو</div>
+        <div class="high-score-menu">🏆 أعلى نتيجة: <span id="menuHighScore">0</span></div>
+        <div class="menu-buttons">
+            <button class="menu-btn" onclick="startGame()">▶️ ابدأ اللعب</button>
+        </div>
+    </div>
 
-    <div class="controls">
-        <div class="btn" id="btnLeft">◀️</div>
-        <div class="btn" id="btnRight">▶️</div>
+    <div id="gameScreen">
+        <div class="top-bar">
+            <button class="back-btn" onclick="goToMenu()">↩️ خروج</button>
+            <div>🍬 السكور: <span id="scoreDisplay">0</span></div>
+            <div>🏆 الأعلى: <span id="highDisplay">0</span></div>
+        </div>
+        <div class="game-area" id="gameArea">
+            <div class="cloud">☁️</div>
+            <div class="cloud">☁️</div>
+            <div class="danger-line"></div>
+            <div class="character" id="character">🦸‍♂️</div>
+            <div class="ground"></div>
+        </div>
     </div>
 
     <div class="overlay" id="loseOverlay">
-        <div class="box">
-            <h2>انتهت اللعبة! 💥</h2>
-            <p id="finalScore">النقاط: 0</p>
-            <button class="btn-start" onclick="resetGame()">🔄 العب مجدداً</button>
+        <div class="lose-box">
+            <span class="emoji-status">💥</span>
+            <div class="lose-title">انتهت اللعبة!</div>
+            <div class="score-text" id="finalScore">النتيجة: 0</div>
+            <div class="score-text" id="bestScore" style="color:#2ed573;">أعلى نتيجة: 0</div>
+            <button class="btn-retry" onclick="retryLevel()">🔄 إعادة المحاولة</button>
         </div>
     </div>
 
     <script>
-        var canvas = document.getElementById('gameCanvas');
-        var ctx = canvas.getContext('2d');
-        
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+        var audioCtx = null;
+        function initAudio() {
+            if(!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)();
         }
-        resizeCanvas();
+        function playTone(f, d, type) {
+            if (!audioCtx) return;
+            try {
+                var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+                o.type = type || 'sine'; o.frequency.value = f;
+                g.gain.value = 0.1; g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
+                o.connect(g); g.connect(audioCtx.destination);
+                o.start(); o.stop(audioCtx.currentTime + d);
+            } catch(e){}
+        }
+        function sfx(t) {
+            if(t==='candy') playTone(900, 0.08, 'sine');
+            if(t==='bomb') playTone(60, 0.2, 'sawtooth');
+            if(t==='lose') playTone(120, 0.4, 'sawtooth');
+        }
 
         var score = 0;
+        var highScore = localStorage.getItem('candy_hero_simple_high') || 0;
         var gameActive = false;
-        var car = { x: 0, y: 0, w: 40, h: 70, speed: 6 };
-        var obstacles = [];
-        var keys = { left: false, right: false };
+        var spawnTimer = null;
+        var gameSpeed = 3.2; 
+        var itemsArray = [];
+        var missedCount = 0;
 
-        function initGame() {
-            car.x = canvas.width / 2 - car.w / 2;
-            car.y = canvas.height - car.h - 130;
-            obstacles = [];
-            score = 0;
-            document.getElementById('score').innerText = score;
+        document.getElementById('menuHighScore').innerText = highScore;
+
+        function startGame() {
+            initAudio();
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('gameScreen').classList.add('active');
+            resetGameSession();
         }
 
-        function spawnObstacle() {
-            if(!gameActive) return;
-            var width = Math.random() * 40 + 40;
-            var x = Math.random() * (canvas.width - width);
-            obstacles.push({ x: x, y: -60, w: width, h: 40, speed: Math.random() * 2 + 4 });
-            setTimeout(spawnObstacle, Math.random() * 1000 + 1000);
-        }
-
-        function update() {
-            if(!gameActive) return;
-
-            if(keys.left && car.x > 0) car.x -= car.speed;
-            if(keys.right && car.x < canvas.width - car.w) car.x += car.speed;
-
-            for(var i = obstacles.length - 1; i >= 0; i--) {
-                obstacles[i].y += obstacles[i].speed;
-
-                // كشف التصادم
-                if(car.x < obstacles[i].x + obstacles[i].w &&
-                   car.x + car.w > obstacles[i].x &&
-                   car.y < obstacles[i].y + obstacles[i].h &&
-                   car.y + car.h > obstacles[i].y) {
-                    gameOver();
-                }
-
-                // تجاوز العقبة بنجاح
-                if(obstacles[i].y > canvas.height) {
-                    obstacles.splice(i, 1);
-                    score++;
-                    document.getElementById('score').innerText = score;
-                }
-            }
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // رسم الخطوط الجانبية للطريق
-            ctx.fillStyle = '#f1c40f';
-            ctx.fillRect(10, 0, 5, canvas.height);
-            ctx.fillRect(canvas.width - 15, 0, 5, canvas.height);
-
-            // رسم سيارة اللاعب
-            ctx.fillStyle = '#e74c3c';
-            ctx.fillRect(car.x, car.y, car.w, car.h);
-
-            // رسم العقبات
-            ctx.fillStyle = '#2ecc71';
-            for(var i = 0; i < obstacles.length; i++) {
-                ctx.fillRect(obstacles[i].x, obstacles[i].y, obstacles[i].w, obstacles[i].h);
-            }
-        }
-
-        function loop() {
-            update();
-            draw();
-            requestAnimationFrame(loop);
-        }
-
-        function gameOver() {
+        function goToMenu() {
             gameActive = false;
-            document.getElementById('finalScore').innerText = "النقاط المحققة: " + score;
-            document.getElementById('loseOverlay').style.display = 'flex';
+            clearAllTimersAndItems();
+            document.getElementById('gameScreen').classList.remove('active');
+            document.getElementById('mainMenu').style.display = 'flex';
+            document.getElementById('menuHighScore').innerText = highScore;
         }
 
-        function resetGame() {
-            document.getElementById('loseOverlay').style.display = 'none';
-            initGame();
+        function resetGameSession() {
+            score = 0;
+            missedCount = 0;
+            gameSpeed = 3.2;
             gameActive = true;
+            itemsArray = [];
+            document.getElementById('scoreDisplay').innerText = score;
+            document.getElementById('highDisplay').innerText = highScore;
+            document.getElementById('loseOverlay').classList.remove('show');
+            
+            var elements = document.querySelectorAll('.falling-item');
+            elements.forEach(el => el.remove());
+
+            clearAllTimersAndItems();
+            startSpawning();
+            requestAnimationFrame(updateItemsPhysics);
         }
 
-        // أزرار التحكم باللمس
-        var bLeft = document.getElementById('btnLeft');
-        var bRight = document.getElementById('btnRight');
+        function clearAllTimersAndItems() {
+            if(spawnTimer) clearInterval(spawnTimer);
+        }
 
-        bLeft.addEventListener('touchstart', function(e) { e.preventDefault(); keys.left = true; });
-        bLeft.addEventListener('touchend', function(e) { keys.left = false; });
-        bRight.addEventListener('touchstart', function(e) { e.preventDefault(); keys.right = true; });
-        bRight.addEventListener('touchend', function(e) { keys.right = false; });
+        function startSpawning() {
+            spawnTimer = setInterval(function() {
+                if(!gameActive) return;
+                spawnItem();
+            }, 850);
+        }
 
-        // دعم الماوس للتجربة على المتصفح
-        bLeft.addEventListener('mousedown', function() { keys.left = true; });
-        bLeft.addEventListener('mouseup', function() { keys.left = false; });
-        bRight.addEventListener('mousedown', function() { keys.right = true; });
-        bRight.addEventListener('mouseup', function() { keys.right = false; });
+        function spawnItem() {
+            var area = document.getElementById('gameArea');
+            var item = document.createElement('div');
+            item.className = 'falling-item';
+            
+            var isBomb = Math.random() < 0.22;
+            if(isBomb) {
+                item.innerText = '💣';
+                item.dataset.type = 'bomb';
+            } else {
+                var candies = ['🍬', '🍭', '🍩', '🍫'];
+                item.innerText = candies[Math.floor(Math.random() * candies.length)];
+                item.dataset.type = 'candy';
+            }
 
-        initGame();
-        loop();
-        setTimeout(spawnObstacle, 1000);
+            var areaWidth = area.clientWidth;
+            var randomLeft = Math.random() * (areaWidth - 60) + 10;
+            item.style.left = randomLeft + 'px';
+            item.style.top = '-60px';
+
+            area.appendChild(item);
+
+            var itemObj = {
+                el: item,
+                top: -60,
+                left: randomLeft,
+                type: item.dataset.type,
+                collected: false
+            };
+
+            // معالجة اللمس السريع الفوري لحل الخلل تماماً
+            function handleItemTouch(e) {
+                if (e) e.preventDefault();
+                if(itemObj.collected || !gameActive) return;
+                itemObj.collected = true;
+                
+                if(itemObj.type === 'candy') {
+                    score++;
+                    sfx('candy');
+                    document.getElementById('scoreDisplay').innerText = score;
+                    if(score > highScore) {
+                        highScore = score;
+                        localStorage.setItem('candy_hero_simple_high', highScore);
+                        document.getElementById('highDisplay').innerText = highScore;
+                    }
+                    if(score % 6 === 0) gameSpeed += 0.25;
+                } else {
+                    sfx('bomb');
+                    triggerGameOver();
+                }
+                item.remove();
+            }
+
+            // دعم شامل لكافة أنواع أجهزة اللمس والمؤشر لضمان عدم ضياع النقرة
+            item.addEventListener('touchstart', handleItemTouch, {passive: false});
+            item.addEventListener('pointerdown', handleItemTouch, {passive: false});
+
+            itemsArray.push(itemObj);
+        }
+
+        function updateItemsPhysics() {
+            if(!gameActive) return;
+
+            var areaHeight = document.getElementById('gameArea').clientHeight;
+
+            for(var i = itemsArray.length - 1; i >= 0; i--) {
+                var item = itemsArray[i];
+                if(item.collected) {
+                    itemsArray.splice(i, 1);
+                    continue;
+                }
+
+                item.top += gameSpeed;
+                item.el.style.transform = 'translateY(' + item.top + 'px)';
+
+                // عندما يتجاوز خط الخطر السفلي
+                if(item.top > (areaHeight - 120)) {
+                    if(item.type === 'candy') {
+                        missedCount++;
+                        if(missedCount >= 5) {
+                            triggerGameOver();
+                        }
+                    }
+                    item.el.remove();
+                    itemsArray.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(updateItemsPhysics);
+        }
+
+        function triggerGameOver() {
+            gameActive = false;
+            clearAllTimersAndItems();
+            sfx('lose');
+            
+            document.getElementById('finalScore').innerText = "النتيجة الحالية: " + score;
+            document.getElementById('bestScore').innerText = "أعلى نتيجة: " + highScore;
+            document.getElementById('loseOverlay').classList.add('show');
+        }
+
+        function retryLevel() {
+            resetGameSession();
+        }
     </script>
 </body>
 </html>
