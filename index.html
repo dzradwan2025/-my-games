@@ -47,12 +47,18 @@
             <div class="game-title">كاندي هيرو</div>
             <span class="game-status">⚡ جاهزة أوفلاين</span>
         </div>
+
+        <div class="game-card" onclick="openGame('🚗 نيو دريفت', 'new-drift.html')">
+            <span class="game-icon">🚗</span>
+            <div class="game-title">نيو دريفت</div>
+            <span class="game-status">⚡ جاهزة أوفلاين</span>
+        </div>
     </div>
 
     <div class="update-overlay" id="updateOverlay">
         <div class="update-box">
-            <h2>🔥 ألعاب جديدة متوفرة!</h2>
-            <p>تم إضافة تحديثات جديدة وألعاب مميزة للمنصة. هل تريد تحميلها وتحديث القائمة الآن؟</p>
+            <h2>🔥 لعبة جديدة متوفرة!</h2>
+            <p>تم إضافة لعبة مميزة وجديدة للمنصة. هل تريد تحميلها وإضافتها للقائمة الآن؟</p>
             <div class="update-actions">
                 <button class="btn-update" onclick="applyUpdate()">🔄 تحديث وتحميل</button>
                 <button class="btn-skip" onclick="closeUpdateModal()">اللعب لاحقاً ↩️</button>
@@ -69,10 +75,12 @@
     </div>
 
     <script>
+        // الإصدار الحالي الأساسي هو 1 (يحتوي على كاندي ونيو دريفت)
         var localVersion = parseInt(localStorage.getItem('game_hub_version')) || 1; 
         var pendingUpdateData = null;
 
         window.onload = function() {
+            // إعادة عرض أي ألعاب إضافية جديدة تم تحميلها سابقاً ومحفوظة في ذاكرة الهاتف
             var savedGames = JSON.parse(localStorage.getItem('added_games')) || [];
             savedGames.forEach(function(g) {
                 addNewGameCard(g.title, g.url, g.icon);
@@ -83,6 +91,7 @@
         function checkForUpdates() {
             if (!navigator.onLine) return;
 
+            // الفحص من ملف السيرفر عن وجود لعبة ثالثة مستقبلاً
             fetch('update.json?nocache=' + Date.now())
                 .then(response => response.json())
                 .then(data => {
@@ -91,7 +100,7 @@
                         document.getElementById('updateOverlay').classList.add('show');
                     }
                 })
-                .catch(err => console.log("خطأ:", err));
+                .catch(err => console.log("لا يوجد تحديثات جديدة حالياً."));
         }
 
         function applyUpdate() {
@@ -108,7 +117,7 @@
                 }
             }
             document.getElementById('updateOverlay').classList.remove('show');
-            alert("🚀 تم التحديث بنجاح!");
+            alert("🚀 تم إضافة اللعبة الجديدة بنجاح!");
         }
 
         function closeUpdateModal() {
